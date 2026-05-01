@@ -162,15 +162,15 @@ pub const Row = struct {
         return 0;
     }
 
-    pub fn print(self: Self, out: anytype, format: TableFormat, colWidth: []const usize) usize {
+    pub fn print(self: Self, out: *std.Io.Writer, format: TableFormat, colWidth: []const usize) usize {
         return self.internalPrint(out, format, colWidth, Cell.print) catch return 0;
     }
 
-    pub fn printTerm(self: Self, out: anytype, format: TableFormat, colWidth: []const usize) usize {
+    pub fn printTerm(self: Self, out: *std.Io.Writer, format: TableFormat, colWidth: []const usize) usize {
         return self.internalPrint(out, format, colWidth, Cell.printTerm) catch return 0;
     }
 
-    fn internalPrint(self: Self, out: anytype, format: TableFormat, colWidth: []const usize, f: fn (Cell, allocator: std.mem.Allocator, out: anytype, usize, usize, bool) void) !usize {
+    fn internalPrint(self: Self, out: *std.Io.Writer, format: TableFormat, colWidth: []const usize, f: fn (Cell, allocator: std.mem.Allocator, out: *std.Io.Writer, usize, usize, bool) void) !usize {
         const height = self.getHeight();
         for (0..height) |i| {
             for (0..format.getIndent()) |_| {
@@ -328,13 +328,12 @@ test "test print" {
     var r = try row(testing.allocator, &data);
     defer r.deinit();
 
-    var buf: std.ArrayList(u8) = .empty;
-    defer buf.deinit(testing.allocator);
+    var out = std.Io.Writer.Allocating.init(testing.allocator);
+    _ = r.print(&out.writer, t.FORMAT_DEFAULT, &[_]usize{ 10, 10, 10 });
+    const buf = try out.toOwnedSlice();
+    defer testing.allocator.free(buf);
 
-    const out = buf.writer(testing.allocator);
-    _ = r.print(out, t.FORMAT_DEFAULT, &[_]usize{ 10, 10, 10 });
-
-    try testing.expect(eql(u8, buf.items, "| foo        | bar        | foobar     |" ++ line_sep));
+    try testing.expect(eql(u8, buf, "| foo        | bar        | foobar     |" ++ line_sep));
 }
 
 // test "test extend cell" {

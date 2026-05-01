@@ -68,7 +68,7 @@ pub const LineSeparator = struct {
         return Self.new("-", "+", "+", "+");
     }
 
-    fn print(self: Self, out: anytype, colWidth: []const usize, lpadding: usize, rpadding: usize, colsep: bool, lborder: bool, rborder: bool) !usize {
+    fn print(self: Self, out: *std.Io.Writer, colWidth: []const usize, lpadding: usize, rpadding: usize, colsep: bool, lborder: bool, rborder: bool) !usize {
         if (lborder) {
             _ = try out.write(self.ljunc);
         }
@@ -240,7 +240,7 @@ pub const TableFormat = struct {
         }
     }
 
-    pub fn printLineSeparator(self: Self, out: anytype, colWidth: []const usize, pos: LinePosition) !usize {
+    pub fn printLineSeparator(self: Self, out: *std.Io.Writer, colWidth: []const usize, pos: LinePosition) !usize {
         const sep = self.getSepForLine(pos);
         if (sep == null) {
             return 0;
@@ -251,7 +251,7 @@ pub const TableFormat = struct {
         return sep.?.print(out, colWidth, self.getLPadding(), self.getRPadding(), self.csep != null, self.lborder != null, self.rborder != null);
     }
 
-    pub fn printColumnSeparator(self: Self, out: anytype, pos: ColumnPosition) !void {
+    pub fn printColumnSeparator(self: Self, out: *std.Io.Writer, pos: ColumnPosition) !void {
         const s = self.getColumnSeparator(pos);
         if (s == null) {
             return;
